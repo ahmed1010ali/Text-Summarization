@@ -2,7 +2,8 @@ from textSummarizer.constants import *
 from textSummarizer.utils.common import read_yaml, create_directories
 from textSummarizer.entity import (DataIngestionConfig,
                                    DataValidationConfig,
-                                   DataTransformationConfig)
+                                   DataTransformationConfig,
+                                   ModelTrainerConfig)
 
 
 
@@ -63,3 +64,41 @@ class ConfigurationManager:
         )
 
         return data_transformation_config
+    
+    def get_model_trainer_config(self) -> ModelTrainerConfig:
+        try:
+            # Check for model_trainer key
+            if "model_trainer" not in self.config:
+                raise ValueError("Key 'model_trainer' not found in configuration.")
+
+            config = self.config.model_trainer
+            params = self.params.TrainingArguments
+
+            # Ensure required directories exist
+            create_directories([config.root_dir])
+
+            # Construct ModelTrainerConfig object
+            model_trainer_config = ModelTrainerConfig(
+                root_dir=config.root_dir,
+                data_path=config.data_path,
+                model_ckpt=config.model_ckpt,
+                num_train_epochs=params.num_train_epochs,
+                warmup_steps=params.warmup_steps,
+                per_device_train_batch_size=params.per_device_train_batch_size,
+                weight_decay=params.weight_decay,
+                logging_steps=params.logging_steps,
+                evaluation_strategy=params.evaluation_strategy,
+                eval_steps=params.evaluation_strategy,
+                save_steps=params.save_steps,
+                gradient_accumulation_steps=params.gradient_accumulation_steps
+            )
+
+            return model_trainer_config
+
+        except KeyError as e:
+            raise ValueError(f"Missing required configuration key: {str(e)}")
+        except AttributeError as e:
+            raise ValueError(f"Invalid configuration structure: {str(e)}")
+        
+
+
